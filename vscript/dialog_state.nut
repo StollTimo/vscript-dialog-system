@@ -25,11 +25,21 @@ player <- null;
 selection <- 0;
 playerControl <- false;
 
+//Debug mode
+devmode <- false;
+
+//Prints debug messages in console if enabled
+function DebugPrint(message){
+    if(devmode == true){
+        printl(message)
+    }
+}
+
 
 function GetPlayer()
 {
     player = Entities.FindByClassname(null, "player")
-    printl("GetPlayer: " + player)
+    DebugPrint("GetPlayer: " + player)
 }
 
 //Not actually used yet, planning on moving as much as possible out of hammer into vscript
@@ -69,12 +79,12 @@ function HideDialog(){
 //Get next node in dialog tree
 function SetCurrentNode(index) {
     if (currentNodeIndex == null){
-        printl("SetCurrentNode: Starting Node: " + startNodeIndex)
+        DebugPrint("SetCurrentNode: Starting Node: " + startNodeIndex)
         currentNodeIndex = startNodeIndex;
     }else{
         local tempIndex = nodes[currentNodeIndex][3][index]
         local newIndex = nodes[tempIndex][3][0]
-        printl("SetCurrentNode: Old Node: " + currentNodeIndex + " -> new Node: " + newIndex)
+        DebugPrint("SetCurrentNode: Old Node: " + currentNodeIndex + " -> new Node: " + newIndex)
         currentNodeIndex = newIndex;
     }
 }
@@ -93,25 +103,25 @@ function SetOptions(nodeIndex)
         options.insert(i - 3, nodes[nodes[nodeIndex][i]][0])
     }
     */
-    printl("SetOptions:" + options)
+    DebugPrint("SetOptions:" + options)
 }
 
 function SetTopLine(nodeIndex)
 {
     topLine = nodes[nodeIndex][0]
-    printl("SetTopLine: " + topLine)
+    DebugPrint("SetTopLine: " + topLine)
 }
 
 function SetSndPath(nodeIndex)
 {
     sndPath = nodes[nodeIndex][1]
-    printl("SetSndPath: " + sndPath)
+    DebugPrint("SetSndPath: " + sndPath)
 }
 
 function SetSndDur(nodeIndex)
 {
     sndDur = nodes[nodeIndex][2]
-    printl("SetSndDur: " + sndDur+ "s")
+    DebugPrint("SetSndDur: " + sndDur+ "s")
 }
 
 function FetchOptionsCount() {
@@ -120,7 +130,7 @@ function FetchOptionsCount() {
 
 //Progress to next Node and get new dialog info
 function FetchDialogInfo(){
-    printl("FetchDialogInfo")
+    DebugPrint("FetchDialogInfo")
     SetCurrentNode(selection)
     SetTopLine(currentNodeIndex)
     SetOptions(currentNodeIndex)
@@ -135,7 +145,7 @@ function startNodeFuntion(nodeIndex){
 
 //Create String of availiable options, one marked
 function OptionsToString(index){
-    printl("OptionsToString")
+    DebugPrint("OptionsToString")
     local optionsString = "";
     for (local i = 0; i < options.len(); i++)
     {
@@ -150,26 +160,26 @@ function OptionsToString(index){
 
 //Put Strings together
 function CreateDialogString(){
-    printl("CreateDialogString")
+    DebugPrint("CreateDialogString")
     dialogString = topLine + "\n" + "\n" + OptionsToString(selection);
-    printl(dialogString);
+    DebugPrint(dialogString);
 }
 
 function PlayNode() {
-    printl("PlayNode")
+    DebugPrint("PlayNode")
 
     EntFire("HudHint", "AddOutput", "message " + topLine, 0)
     ShowDialog()
 
-    printl("Playing Sound: " + sndPath + "(" + sndDur + "s)")
+    DebugPrint("Playing Sound: " + sndPath + "(" + sndDur + "s)")
     EntFire("Sound", "AddOutput", "message " + sndPath, 0)
     EntFire("Sound", "PlaySound", "", 0)
     EntFire("Sound", "StopSound", "", sndDur)
 
     if (options.len() > 1){
-        printl("Multiple Nodes found")
+        DebugPrint("Multiple Nodes found")
     }else {
-        printl("Single Node found")
+        DebugPrint("Single Node found")
     }
     EntFire("HudHint", "AddOutput", "message " + dialogString, sndDur)
     EntFire("HudHint", "ShowHudHint", "", sndDur, activator)
@@ -181,7 +191,7 @@ function PlayNode() {
 function AddSelection() {
     if (playerControl == true){
         local upperBound = FetchOptionsCount() - 1;
-        printl("upperBound: " + upperBound)
+        DebugPrint("upperBound: " + upperBound)
         if (selection < upperBound) {
             selection++;
         }else if(selection == upperBound){
@@ -210,7 +220,7 @@ function SubstractSelection() {
 
 //Get new node info based on selected option and play node
 function AcceptOption() {
-    printl("AcceptOption")
+    DebugPrint("AcceptOption")
     if (playerControl == true){
         SetPlayerControl(0)
         FetchDialogInfo()
@@ -226,11 +236,11 @@ function SetPlayerControl(mode){
         case 1: playerControl = true;
                 break;
     }
-    printl("SetPlayerControl: " + playerControl)
+    DebugPrint("SetPlayerControl: " + playerControl)
 }
 
 function RefreshDialog(){
-    printl("Timer Fired")
+    DebugPrint("Timer Fired")
     EntFire("HudHint", "ShowHudHint", "", 0, player)
 }
 
