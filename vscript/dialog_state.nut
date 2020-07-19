@@ -39,7 +39,6 @@ function DebugPrint(message){
     }
 }
 
-
 function GetPlayer()
 {
     player = Entities.FindByClassname(null, "player")
