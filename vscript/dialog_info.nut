@@ -1,3 +1,6 @@
+/*
+Includes all dialog data, such as soundfiles, text, duration and the layout of the dialog tree
+*/
 
 //Precache all soundfiles
 function Precache() {

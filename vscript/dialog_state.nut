@@ -1,3 +1,7 @@
+/*
+Handles the progress between nodes in the dialog tree and the construction of the dialog window.
+*/
+
 IncludeScript("dialog/dialog_info");
 
 const SELECTION_COLOR_RGB = "255 255 255"
