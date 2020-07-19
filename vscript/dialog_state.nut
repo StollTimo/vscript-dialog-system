@@ -1,7 +1,8 @@
 IncludeScript("dialog/dialog_info");
 
 const SELECTION_COLOR_RGB = "255 255 255"
-const SELECTION_MARKER = "●";
+const SELECTION_MARKER_START = "< ";
+const SELECTION_MARKER_END = " >";
 
 //Current dialog info
 startNodeIndex <- 0;
@@ -139,9 +140,9 @@ function OptionsToString(index){
     for (local i = 0; i < options.len(); i++)
     {
         if (i == index){
-            optionsString = optionsString + SELECTION_MARKER + options[i] + SELECTION_MARKER + "\n";
+            optionsString = optionsString + SELECTION_MARKER_START + options[i] + SELECTION_MARKER_END + "\n";
         }else if(i != index){
-            optionsString = optionsString + options[i] + "\n";
+            optionsString = optionsString + "   " + options[i] + "\n";
             }  
     }
     return optionsString;
