@@ -4,7 +4,7 @@ Handles the progress between nodes in the dialog tree and the construction of th
 
 IncludeScript("dialog/dialog_info");
 
-const SELECTION_COLOR_RGB = "255 255 255"
+//Selection highlighting
 const SELECTION_MARKER_START = "< ";
 const SELECTION_MARKER_END = " >";
 
@@ -92,6 +92,7 @@ function SetCurrentNode(index) {
     }
 }
 
+//Catch dialog options from dialog_info and place them in an array for later use
 function SetOptions(nodeIndex)
 {
     options.clear()
