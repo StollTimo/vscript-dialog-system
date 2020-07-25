@@ -5,8 +5,7 @@ Handles the progress between nodes in the dialog tree and the construction of th
 IncludeScript("dialog/dialog_info");
 
 //Selection highlighting
-const SELECTION_MARKER_START = "< ";
-const SELECTION_MARKER_END = " >";
+const SELECTION_MARKER_END = " <";
 
 //Current dialog info
 startNodeIndex <- 0;
@@ -154,9 +153,9 @@ function OptionsToString(index){
     for (local i = 0; i < options.len(); i++)
     {
         if (i == index){
-            optionsString = optionsString + SELECTION_MARKER_START + options[i] + SELECTION_MARKER_END + "\n";
-        }else if(i != index){
-            optionsString = optionsString + "   " + options[i] + "\n";
+            optionsString = optionsString + "[" + (i + 1) + "] " + options[i] + SELECTION_MARKER_END + "\n";
+        }else {
+            optionsString = optionsString + "[" + (i + 1) + "] " + options[i] + "\n";
             }  
     }
     return optionsString;
