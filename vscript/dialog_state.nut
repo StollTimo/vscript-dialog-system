@@ -35,7 +35,7 @@ selection <- 0;
 playerControl <- false;
 
 //Debug mode
-devmode <- true;
+devmode <- false;
 
 //Print debug messages in console if enabled
 function DebugPrint(message){
@@ -52,8 +52,6 @@ function GetPlayer()
 
 //Not actually used yet, planning on moving as much as possible out of hammer into vscript
 function OnPostSpawn() {
-
-    //GetPlayer()
     
     //Setup game_ui entity for dialog control
     gameUI = Entities.CreateByClassname("game_ui")
@@ -103,10 +101,10 @@ function HideDialog(){
 function SetCurrentNode(index) {
     if (currentNodeIndex == null){
         DebugPrint("SetCurrentNode: Starting Node: " + startNodeIndex)
-        currentNodeIndex = startNodeIndex;
+        currentNodeIndex = startNodeIndex;//Sets current node to 0; start of dialog
     }else{
-        local tempIndex = nodes[currentNodeIndex][3][index]
-        local newIndex = nodes[tempIndex][3][0]
+        local tempIndex = currentDialog[currentNodeIndex].next[index]//Sets tempIndex to content of index of nextNodes[]
+        local newIndex = currentDialog[tempIndex].next[0]
         DebugPrint("SetCurrentNode: Old Node: " + currentNodeIndex + " -> new Node: " + newIndex)
         currentNodeIndex = newIndex;
     }
@@ -117,9 +115,9 @@ function SetOptions(nodeIndex)
 {
     options.clear()
     options.resize(0)
-    for (local i = 0; i < currentDialog[nodeIndex][3].len(); i++)
+    for (local i = 0; i < currentDialog[nodeIndex].next.len(); i++)
     {
-        options.insert(i, currentDialog[currentDialog[nodeIndex][3][i]][0])
+        options.insert(i, currentDialog[currentDialog[nodeIndex].next[i]].topLine)
     }
     
     DebugPrint("SetOptions:" + ArrayPrint(options))
@@ -141,19 +139,19 @@ function ArrayPrint(array){
 
 function SetTopLine(nodeIndex)
 {
-    topLine = currentDialog[nodeIndex][0]
+    topLine = currentDialog[nodeIndex].topLine
     DebugPrint("SetTopLine: " + topLine)
 }
 
 function SetSndPath(nodeIndex)
 {
-    sndPath = currentDialog[nodeIndex][1]
+    sndPath = currentDialog[nodeIndex].sndPath
     DebugPrint("SetSndPath: " + sndPath)
 }
 
 function SetSndDur(nodeIndex)
 {
-    sndDur = currentDialog[nodeIndex][2]
+    sndDur = currentDialog[nodeIndex].sndDur
     DebugPrint("SetSndDur: " + sndDur + "s")
 }
 
@@ -287,8 +285,8 @@ function RefreshDialog(){
 
 //Updates the entranceNode of the dialog for later use
 function SaveProgress(){
-    if(currentDialog[currentNodeIndex][4] != currentDialog[currentDialog.len() - 1]){
-        currentDialog[currentDialog.len() - 1] = currentDialog[currentNodeIndex][4]
+    if(currentDialog[currentNodeIndex].newEntranceNode != currentDialog[currentDialog.len() - 1]){
+        currentDialog[currentDialog.len() - 1] = currentDialog[currentNodeIndex].newEntranceNode
     }
     DebugPrint("Progress saved: " + currentDialog[currentDialog.len() - 1])
     
@@ -303,7 +301,7 @@ function LoadProgress(index){
     DebugPrint("LoadProgress:")
     SetCurrentDialog(index)
     currentNodeIndex = null;
-    startNodeIndex = currentDialog[currentDialog.len() - 1]//last index in currentDialog
+    startNodeIndex = currentDialog[currentDialog.len() - 1]
     DebugPrint("EntranceNode: " + startNodeIndex)
     FetchDialogInfo()
 }
@@ -328,10 +326,9 @@ function EndDialog(){
     HideDialog()
     EntFire("GameUI", "Deactivate", "", 0, player)
     EntFire("Button", "Unlock", "", 0)
+    selection = 0
 }
 
 function test(){
-    //player.EmitSound("player/vo/idf/radio_locknload10.wav")
-    local testArray1 = []
-    printl(testArray1.len())
+    printl(dialogs.testDialogRef[0].topLine)
 }
