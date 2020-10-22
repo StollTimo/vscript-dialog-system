@@ -123,7 +123,7 @@ function SetOptions(nodeIndex)
     DebugPrint("SetOptions:" + ArrayPrint(options))
 }
 
-//Put content of an array into a String and return it
+//Put content of an array into a String and return it. Does not print references in an array.
 function ArrayPrint(array){
     local result = "["
     if(array.len() == 0){
@@ -136,6 +136,14 @@ function ArrayPrint(array){
     return result
 }
 
+//Copy an array into a new one by combining it with a new empty one.
+function ArrayCopy(array){
+    if(array.len() != 0 || array != null){
+        local result = []
+        result.extend(array)
+        return result
+    }
+}
 
 function SetTopLine(nodeIndex)
 {
