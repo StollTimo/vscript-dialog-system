@@ -15,10 +15,10 @@ currentDialog <- null;
 //Current dialog info
 startNodeIndex <- 0;
 currentNodeIndex <- null;
-topLine <- "";
+topLine <- [];
 options <- [];
-sndPath <- "";
-sndDur <- 0;
+sndPath <- [];
+sndDur <- [];
 
 dialogString <- "";
 
@@ -147,19 +147,19 @@ function ArrayCopy(array){
 
 function SetTopLine(nodeIndex)
 {
-    topLine = currentDialog[nodeIndex].topLine
+    topLine = ArrayCopy(currentDialog[nodeIndex].topLine)
     DebugPrint("SetTopLine: " + topLine)
 }
 
 function SetSndPath(nodeIndex)
 {
-    sndPath = currentDialog[nodeIndex].sndPath
+    sndPath = ArrayCopy(currentDialog[nodeIndex].sndPath)
     DebugPrint("SetSndPath: " + sndPath)
 }
 
 function SetSndDur(nodeIndex)
 {
-    sndDur = currentDialog[nodeIndex].sndDur
+    sndDur = ArrayCopy(currentDialog[nodeIndex].sndDur)
     DebugPrint("SetSndDur: " + sndDur + "s")
 }
 
@@ -204,7 +204,7 @@ function OptionsToString(index){
 //Put Strings together
 function CreateDialogString(){
     DebugPrint("CreateDialogString")
-    dialogString = topLine + "\n" + "\n" + OptionsToString(selection);
+    dialogString = topLine.len() - 1  + "\n" + "\n" + OptionsToString(selection);
     DebugPrint(dialogString);
 }
 
@@ -212,17 +212,19 @@ function CreateDialogString(){
 function PlayNode() {
     DebugPrint("PlayNode")
 
-    EntFire("HudHint", "AddOutput", "message " + topLine, 0)
-    ShowDialog()
+    for (local i = 0; i<topLine.len(); i++)
+    {
+        EntFire("HudHint", "AddOutput", "message " + topLine[i], 0)
+        ShowDialog()
 
-    DebugPrint("Playing Sound: " + sndPath + "(" + sndDur + "s)")
-    EntFire("Sound", "AddOutput", "message " + sndPath, 0)
-    EntFire("Sound", "PlaySound", "", 0)
-    EntFire("Sound", "StopSound", "", sndDur)
+        DebugPrint("Playing Sound: " + sndPath + "(" + sndDur + "s)")
+        EntFire("Sound", "AddOutput", "message " + sndPath, 0)
+        EntFire("Sound", "PlaySound", "", 0)
+        EntFire("Sound", "StopSound", "", sndDur)
 
-    EntFire("HudHint", "AddOutput", "message " + dialogString, sndDur)
-    EntFire("HudHint", "ShowHudHint", "", sndDur, activator)
-
+        EntFire("HudHint", "AddOutput", "message " + dialogString, sndDur)
+        EntFire("HudHint", "ShowHudHint", "", sndDur, activator)
+    }
     if(options.len() > 0){
         EntFire("Script", "RunScriptCode", "SetPlayerControl(1)", sndDur)
         DebugPrint("Node/s availiable, continuing dialog")
