@@ -8,6 +8,9 @@ IncludeScript("dialog/dialog_info");
 const SELECTION_MARKER_START = "> ";
 const SELECTION_MARKER_END = " <";
 
+//Control flow
+generator <- null
+
 //active dialog, index in dialogs array
 dialogIndex <- null;
 currentDialog <- null;
@@ -35,7 +38,7 @@ selection <- 0;
 playerControl <- false;
 
 //Debug mode
-devmode <- false;
+devmode <- true;
 
 //Print debug messages in console if enabled
 function DebugPrint(message){
@@ -148,19 +151,19 @@ function ArrayCopy(array){
 function SetTopLine(nodeIndex)
 {
     topLine = ArrayCopy(currentDialog[nodeIndex].topLine)
-    DebugPrint("SetTopLine: " + topLine)
+    DebugPrint("SetTopLine: " + ArrayPrint(topLine))
 }
 
 function SetSndPath(nodeIndex)
 {
     sndPath = ArrayCopy(currentDialog[nodeIndex].sndPath)
-    DebugPrint("SetSndPath: " + sndPath)
+    DebugPrint("SetSndPath: " + ArrayPrint(sndPath))
 }
 
 function SetSndDur(nodeIndex)
 {
     sndDur = ArrayCopy(currentDialog[nodeIndex].sndDur)
-    DebugPrint("SetSndDur: " + sndDur + "s")
+    DebugPrint("SetSndDur: " + ArrayPrint(sndDur))
 }
 
 //TODO
@@ -179,7 +182,8 @@ function FetchDialogInfo(){
     CreateDialogString()
 }
 
-//Calls a function tied to the current node
+//Calls a function tied to the current node´
+//TODO
 function ExecuteNodeFuntion(){
     currentDialog[currentDialog.len() - 2]
 }
@@ -204,33 +208,47 @@ function OptionsToString(index){
 //Put Strings together
 function CreateDialogString(){
     DebugPrint("CreateDialogString")
-    dialogString = topLine.len() - 1  + "\n" + "\n" + OptionsToString(selection);
+    dialogString = topLine[topLine.len() - 1]  + "\n" + "\n" + OptionsToString(selection);
     DebugPrint(dialogString);
 }
 
-//Show the dialog text and play the voiceline
+//Suspends generator for a give duration and resumes it afterwards
+function SuspendGenerator(pauseDur){
+    DebugPrint("Generator suspended for " + pauseDur + "s")
+    EntFire("Script", "RunScriptCode", "ResumeGenerator()", pauseDur)
+}
+
+//Resumes a suspended generator
+function ResumeGenerator() {
+    DebugPrint("Generator resumed")
+    resume generator
+}
+
+//Show the dialog text and play the voicelines. Generator function
 function PlayNode() {
     DebugPrint("PlayNode")
-
     for (local i = 0; i<topLine.len(); i++)
     {
         EntFire("HudHint", "AddOutput", "message " + topLine[i], 0)
         ShowDialog()
 
-        DebugPrint("Playing Sound: " + sndPath + "(" + sndDur + "s)")
-        EntFire("Sound", "AddOutput", "message " + sndPath, 0)
+        DebugPrint("Playing Sound: " + sndPath[i] + "(" + sndDur[i] + "s)")
+        EntFire("Sound", "AddOutput", "message " + sndPath[i], 0)
         EntFire("Sound", "PlaySound", "", 0)
-        EntFire("Sound", "StopSound", "", sndDur)
+        EntFire("Sound", "StopSound", "", sndDur[i])
 
-        EntFire("HudHint", "AddOutput", "message " + dialogString, sndDur)
-        EntFire("HudHint", "ShowHudHint", "", sndDur, activator)
+        yield SuspendGenerator(sndDur[i])
     }
+    
+    EntFire("HudHint", "AddOutput", "message " + dialogString, 0)
+    EntFire("HudHint", "ShowHudHint", "", 0, activator)
+
     if(options.len() > 0){
-        EntFire("Script", "RunScriptCode", "SetPlayerControl(1)", sndDur)
         DebugPrint("Node/s availiable, continuing dialog")
+        EntFire("Script", "RunScriptCode", "SetPlayerControl(1)", 0)
     }else{
         DebugPrint("No Node/s availiable, ending dialog")
-        EntFire("Script", "RunScriptCode", "EndDialog()", sndDur)
+        EntFire("Script", "RunScriptCode", "EndDialog()", 0)
         }
 }
 
@@ -325,7 +343,8 @@ function StartDialog(dialogIndex){
     EntFire("GameUI", "Activate", "", 0, player)
     ShowDialog()
     EntFire("Timer", "Enable", "", 0)
-    PlayNode()
+    generator = PlayNode()
+    resume generator//Starts the generator which is initially suspended
 }
 
 //Ends dialog
