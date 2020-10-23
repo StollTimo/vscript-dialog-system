@@ -19,9 +19,9 @@ function Precache() {
 testDialog <-
 [
 	{
-		topLine = ["Welcome back, how can I help you today?", "String 2", "String 3", "String 4"],
-		sndPath = ["custom/Test/TestWelcome.wav", "", "", ""],
-		sndDur = [3.0, 2, 2, 2],
+		topLine = ["Welcome back, how can I help you today?"],
+		sndPath = ["custom/Test/TestWelcome.wav"],
+		sndDur = [3.0],
 		next = [1,2,3,12],
 		newEntranceNode = 0
 	},
