@@ -13,6 +13,9 @@ It makes use of a game_ui entity to map the playercontrols to an env_hudhint.
 All dialog data is stored in a separate file and put together everytime the player makes an input and therefore basically creating a new frame of the menu.
 Everything was done using as little vscript as possible so only a basic understanding should be necessary to use this.
 
+## How does it look in hammer
+Download both [dialog_state](vscript/) and [dialog_info](vscript/), put them in vscript/dialog and open [dialog_test](example-map) in hammer.
+
 [Example map in the workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2232289356)\
 [Official Squirrel Documentation](https://developer.electricimp.com/squirrel)\
 [Alternative Squirrel Documentation](http://squirrel-lang.org/squirreldoc/reference/index.html) (more examples and explanation)\
