@@ -120,7 +120,7 @@ function SetOptions(nodeIndex)
     options.resize(0)
     for (local i = 0; i < currentDialog[nodeIndex].next.len(); i++)
     {
-        options.insert(i, currentDialog[currentDialog[nodeIndex].next[i]].topLine)
+        options.insert(i, currentDialog[currentDialog[nodeIndex].next[i]].topLine[0])
     }
     
     DebugPrint("SetOptions:" + ArrayPrint(options))
@@ -289,7 +289,8 @@ function AcceptOption() {
         DebugPrint("AcceptOption")
         SetPlayerControl(0)
         FetchDialogInfo()
-        PlayNode()
+        generator = PlayNode()
+        resume generator
         selection = 0
     }
 }
