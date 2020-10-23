@@ -17,6 +17,6 @@ Everything was done using as little vscript as possible so only a basic understa
 Download both [dialog_state](vscript/) and [dialog_info](vscript/), put them in vscript/dialog and open [dialog_test](example-map) in hammer.
 
 [Example map in the workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2232289356)\
-[Official Squirrel Documentation](https://developer.electricimp.com/squirrel)\
-[Alternative Squirrel Documentation](http://squirrel-lang.org/squirreldoc/reference/index.html) (more examples and explanation)\
+[Official Squirrel Documentation](http://squirrel-lang.org/squirreldoc/reference/index.html)\
+[Alternative Squirrel Documentation](https://developer.electricimp.com/squirrel) (more examples and explanation)\
 [VDC](https://developer.valvesoftware.com/wiki/List_of_Counter-Strike:_Global_Offensive_Script_Functions)
