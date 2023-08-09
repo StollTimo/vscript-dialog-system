@@ -4,14 +4,14 @@ Handles the progress between nodes in the dialog tree and the construction of th
 
 IncludeScript("dialog/dialog_info");
 
-//Selection highlighting
+//Selection highlighting charakters
 const SELECTION_MARKER_START = "> ";
 const SELECTION_MARKER_END = " <";
 
 //Control flow
 generator <- null
-
-//active dialog, index in dialogs array
+//availiable dialogs, active dialog, index in dialogs array
+dialogs <- [testDialog];
 dialogIndex <- null;
 currentDialog <- null;
 
@@ -23,8 +23,7 @@ options <- [];
 sndPath <- [];
 sndDur <- [];
 
-dialogString <- "";
-
+dialogString <- "";// Must not exceed 510 chars if used with env_hudhint, otherwise will cut off portions of the string
 //Entities
 gameText <- null;
 sound <- null;
@@ -37,8 +36,8 @@ player <- null;
 selection <- 0;
 playerControl <- false;
 
-//Debug mode
-devmode <- true;
+//Debug mode, enables more detailed console output
+devmode <- false;
 
 //Print debug messages in console if enabled
 function DebugPrint(message){
@@ -47,6 +46,7 @@ function DebugPrint(message){
     }
 }
 
+//Finds the local player
 function GetPlayer()
 {
     player = Entities.FindByClassname(null, "player")
@@ -55,7 +55,7 @@ function GetPlayer()
 
 //Not actually used yet, planning on moving as much as possible out of hammer into vscript
 function OnPostSpawn() {
-    
+
     //Setup game_ui entity for dialog control
     gameUI = Entities.CreateByClassname("game_ui")
     gameUI.__KeyValueFromInt("spawnflags", 224)
@@ -81,13 +81,11 @@ function OnPostSpawn() {
     timer.__KeyValueFromInt("StartDisabled", 1)
     sound.ValidateScriptScope()
     local scope = timer.GetScriptScope()
-    //TODO Fix fucking bug
     //scope.RefreshDialogRef <- RefreshDialog
 
     //Setup env_hudhint for dialog display
     hudHint = Entities.CreateByClassname("env_hudhint")
 
-    //test()
 }
 
 //Display hud_hint
@@ -113,29 +111,54 @@ function SetCurrentNode(index) {
     }
 }
 
-//Catch dialog options from dialog_info and place them in an array for later use
+//Filter array by argument and pass to new array; Included in newer versions of Squirrel
+function ArrayFilter(array, argument){
+    local filteredArray = []
+    for(local i = array.len() - 1; i >= 0; i--){
+        if(array[i] != argument){
+            filteredArray.insert(0, array[i])
+        }
+    }
+    return filteredArray
+}
+
+//Catch current dialog options and place them in an array for later use
 function SetOptions(nodeIndex)
 {
+    optionsMapping.clear()
+    optionsMapping.resize(0)
+    local optionsLength = currentDialog[nodeIndex].next.len()
+    printl(optionsLength)
     options.clear()
-    options.resize(0)
-    for (local i = 0; i < currentDialog[nodeIndex].next.len(); i++)
+    options.resize(0)//resize to prevent memory leak
+    for (local i = 0; i < optionsLength; i++)
     {
-        options.insert(i, currentDialog[currentDialog[nodeIndex].next[i]].topLine[0])
+        printl(i)
+        if(!("nodeAccess" in currentDialog[currentDialog[nodeIndex].next[i]]) || ("nodeAccess" in currentDialog[currentDialog[nodeIndex].next[i]] && currentDialog[currentDialog[nodeIndex].next[i]].nodeAccess == 1)){
+            printl("Access")
+            options.insert(i, currentDialog[currentDialog[nodeIndex].next[i]].topLine[0])
+            optionsMapping.append(i)
+        }else{
+            options.insert(i, "/no Access to node/")
+            printl("no Access")
+            }
     }
-    
+    options = ArrayFilter(options, "/no Access to node/")
     DebugPrint("SetOptions:" + ArrayPrint(options))
+    DebugPrint("Mapping: " + ArrayPrint(optionsMapping))
 }
 
 //Put content of an array into a String and return it. Does not print references in an array.
 function ArrayPrint(array){
     local result = "["
+    local arrayLength = array.len() - 1
     if(array.len() == 0){
         return result = "[]"
     }
-    for(local i = 0; i < array.len() - 1; i++){
+    for(local i = 0; i < arrayLength; i++){
             result = result + array[i] + ", "
         }
-    result = result + array[array.len() - 1] + "]"
+    result = result + array[arrayLength] + "]"
     return result
 }
 
@@ -166,7 +189,7 @@ function SetSndDur(nodeIndex)
     DebugPrint("SetSndDur: " + ArrayPrint(sndDur))
 }
 
-//TODO
+//Returns length of options array
 function FetchOptionsCount() {
     return options.len()
 }
@@ -174,7 +197,7 @@ function FetchOptionsCount() {
 //Progress to next Node and get new dialog info
 function FetchDialogInfo(){
     DebugPrint("FetchDialogInfo")
-    SetCurrentNode(selection)
+    SetCurrentNode(optionsMapping[selection])
     SetTopLine(currentNodeIndex)
     SetOptions(currentNodeIndex)
     SetSndPath(currentNodeIndex)
@@ -182,24 +205,29 @@ function FetchDialogInfo(){
     CreateDialogString()
 }
 
-//Calls a function tied to the current node´
-//TODO
+//Calls a function tied to the current node
 function ExecuteNodeFuntion(){
-    currentDialog[currentDialog.len() - 2]
+    if("nodeFunction" in currentDialog[currentNodeIndex]){
+        currentDialog[currentNodeIndex].nodeFunction()
+    }else{
+        printl("No node function")
+    }
+
 }
 
 //Create String of availiable options, one marked. Formatting can be applied here.
 function OptionsToString(index){
     DebugPrint("OptionsToString")
     local optionsString = "";
+    local optionsLength = options.len()
     if(options.len() > 0){
-        for (local i = 0; i < options.len(); i++)
+        for (local i = 0; i < optionsLength; i++)
         {
             if (i == index){
                 optionsString = optionsString + SELECTION_MARKER_START + "[" + (i + 1) + "] " + options[i] + "\n";//Marked option
             }else {
                 optionsString = optionsString + "[" + (i + 1) + "] " + options[i] + "\n";//Unmarked option(s)
-                }  
+                }
         }
     }
     return optionsString;
@@ -208,7 +236,7 @@ function OptionsToString(index){
 //Put Strings together
 function CreateDialogString(){
     DebugPrint("CreateDialogString")
-    dialogString = topLine[topLine.len() - 1]  + "\n" + "\n" + OptionsToString(selection);
+    dialogString = DIALOG_PLACEHOLDER + "\n" + topLine[topLine.len() - 1]  + "\n" + "\n" + OptionsToString(selection);
     DebugPrint(dialogString);
 }
 
@@ -227,19 +255,24 @@ function ResumeGenerator() {
 //Show the dialog text and play the voicelines. Generator function
 function PlayNode() {
     DebugPrint("PlayNode")
+    ExecuteNodeFuntion()
+    local topLineLength = topLine.len()
+
     for (local i = 0; i<topLine.len(); i++)
     {
         EntFire("HudHint", "AddOutput", "message " + topLine[i], 0)
         ShowDialog()
 
+                //If sound file present play
+                if (sndPath[i] != "") {
         DebugPrint("Playing Sound: " + sndPath[i] + "(" + sndDur[i] + "s)")
         EntFire("Sound", "AddOutput", "message " + sndPath[i], 0)
         EntFire("Sound", "PlaySound", "", 0)
         EntFire("Sound", "StopSound", "", sndDur[i])
-
+                }
         yield SuspendGenerator(sndDur[i])
     }
-    
+
     EntFire("HudHint", "AddOutput", "message " + dialogString, 0)
     EntFire("HudHint", "ShowHudHint", "", 0, activator)
 
@@ -295,7 +328,7 @@ function AcceptOption() {
     }
 }
 
-//Changes if the player can control the dialog
+//Changes if the player can control the dialog via game_ui to prevent breaking controlflow
 function SetPlayerControl(mode){
     switch(mode){
         case 0: playerControl = false;
@@ -306,7 +339,7 @@ function SetPlayerControl(mode){
     DebugPrint("SetPlayerControl: " + playerControl)
 }
 
-//Recall the "ShowHudHint" input since env_hudhint only stays on sceen for a few seconds
+//Recall the "ShowHudHint" input since env_hudhint only stays on screen for a few seconds
 function RefreshDialog(){
     //DebugPrint("Timer Fired")
     EntFire("HudHint", "ShowHudHint", "", 0, player)
@@ -318,7 +351,7 @@ function SaveProgress(){
         currentDialog[currentDialog.len() - 1] = currentDialog[currentNodeIndex].newEntranceNode
     }
     DebugPrint("Progress saved: " + currentDialog[currentDialog.len() - 1])
-    
+
 }
 
 function SetCurrentDialog(index){
@@ -357,8 +390,10 @@ function EndDialog(){
     EntFire("GameUI", "Deactivate", "", 0, player)
     EntFire("Button", "Unlock", "", 0)
     selection = 0
+    optionsMapping = [0]
 }
 
 function test(){
-    printl(dialogs.testDialogRef[0].topLine)
+    printl("nodeAccess: " + testDialog[3].nodeAccess)
+    printl(version)
 }
