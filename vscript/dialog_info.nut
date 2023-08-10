@@ -14,18 +14,19 @@ function Precache() {
     self.PrecacheScriptSound("custom/Test/TestWelcomeBack.wav")
 }
 
-// using tables
-// access: node[0].topLine
 testDialog <-
 [
 	{
+		id = 0,
 		topLine = ["Welcome back, how can I help you today?"],
 		sndPath = ["custom/Test/TestWelcome.wav"],
 		sndDur = [3.0],
 		next = [1,2,3,12],
 		newEntranceNode = 0
+		nodeFunction = function(){EntFire("Explosion", "Explode", "", 0)}
 	},
 	{
+		id = 1,
 		topLine = ["Where am I?"],
 		sndPath = [""],
 		sndDur = 1.0,
@@ -33,6 +34,7 @@ testDialog <-
 		newEntranceNode = 0
 	},
 	{
+		id = 2,
 		topLine = ["Who are you?"],
 		sndPath = [""],
 		sndDur = [1.0],
@@ -40,6 +42,7 @@ testDialog <-
 		newEntranceNode = 0
 	},
     {
+		id = 3,
 		topLine = ["How do you know me?"],
 		sndPath = [""],
 		sndDur = [1.0],
@@ -47,6 +50,7 @@ testDialog <-
 		newEntranceNode = 0
 	},
     {
+		id = 4,
 		topLine = ["You are at home, where else could you be?"],
 		sndPath = ["custom/Test/TestHome.wav"],
 		sndDur = [3.0],
@@ -54,6 +58,7 @@ testDialog <-
 		newEntranceNode = 0
 	},
     {
+		id = 5,
 		topLine = ["I am support module A, factory id 1231.01, or as you like to call me 'The stinky one'. I certanly don't approve of the last bit."],
 		sndPath = ["custom/Test/TestIntroduction.wav"],
 		sndDur = [11.0],
@@ -61,6 +66,7 @@ testDialog <-
 		newEntranceNode = 0
 	},
     {
+		id = 6,
 		topLine = ["Protocol 43a clearly provides all the necessary information: Inhabitant 3a, female, 11 years of age."],
 		sndPath = ["custom/Test/TestKnowing.wav"],
 		sndDur = [8.0],
@@ -68,6 +74,7 @@ testDialog <-
 		newEntranceNode = 0
 	},
     {
+		id = 7,
 		topLine = ["Do I look like a 11 year old girl to you?"],
 		sndPath = [""],
 		sndDur = [4.0],
@@ -75,6 +82,7 @@ testDialog <-
 		newEntranceNode = 0
 	},
     {
+		id = 8,
 		topLine = ["I have never been here before"],
 		sndPath = [""],
 		sndDur = [4.0],
@@ -82,6 +90,7 @@ testDialog <-
 		newEntranceNode = 0
 	},
     {
+		id = 9,
 		topLine = ["Well, looks can be deceiving and you've always had quite the appetite, if I dare to say so."],
 		sndPath = ["custom/Test/TestLooks.wav"],
 		sndDur = [6.0],
@@ -89,6 +98,7 @@ testDialog <-
 		newEntranceNode = 0
 	},
     {
+		id = 10,
 		topLine = ["Don't be silly, nobody in his right mind could forget the experience provided by a special issue housing unit."],
 		sndPath = ["custom/Test/TestUnit.wav"],
 		sndDur = [7.0],
@@ -96,6 +106,7 @@ testDialog <-
 		newEntranceNode = 0
 	},
     {
+		id = 10,
 		topLine = ["Until next time"],
 		sndPath = ["custom/Test/TestLeave.wav"],
 		sndDur = [2.0],
@@ -103,6 +114,7 @@ testDialog <-
 		newEntranceNode = 13
 	},
     {
+		id = 11,
 		topLine = ["[Leave]"],
 		sndPath = [""],
 		sndDur = [1.0],
@@ -110,6 +122,7 @@ testDialog <-
 		newEntranceNode = 0
 	},
     {
+		id = 12,
 		topLine = ["Once again we meet"],
 		sndPath = ["custom/Test/TestWelcomeBack.wav"],
 		sndDur = [2.0],
@@ -118,5 +131,3 @@ testDialog <-
 	},
     0
 ]
-
-dialogs <- [testDialog]
