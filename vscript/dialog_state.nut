@@ -7,29 +7,34 @@ IncludeScript("dialog/dialog_info");
 //Selection highlighting charakters
 const SELECTION_MARKER_START = "> ";
 const SELECTION_MARKER_END = " <";
+const DIALOG_PLACEHOLDER = "                                    "
 
 //Control flow
 generator <- null
+
 //availiable dialogs, active dialog, index in dialogs array
 dialogs <- [testDialog];
 dialogIndex <- null;
 currentDialog <- null;
 
 //Current dialog info
-startNodeIndex <- 0;
-currentNodeIndex <- null;
+startNodeID <- 0;
+currentNodeID <- null;
+currentNode <- null;
 topLine <- [];
 options <- [];
+optionsMapping <- [0];
 sndPath <- [];
 sndDur <- [];
 
 dialogString <- "";// Must not exceed 510 chars if used with env_hudhint, otherwise will cut off portions of the string
+
 //Entities
 gameText <- null;
 sound <- null;
 gameUI <- null;
 timer <- null;
-hudHint <- null;
+hudhint <- null;
 
 //User input
 player <- null;
@@ -84,7 +89,7 @@ function OnPostSpawn() {
     //scope.RefreshDialogRef <- RefreshDialog
 
     //Setup env_hudhint for dialog display
-    hudHint = Entities.CreateByClassname("env_hudhint")
+    hudhint = Entities.FindByName(null, "HudHint")
 
 }
 
@@ -98,16 +103,26 @@ function HideDialog(){
     EntFire("HudHint", "HideHudHint", "", 0, player)
 }
 
-//Get next node in dialog tree
-function SetCurrentNode(index) {
-    if (currentNodeIndex == null){
-        DebugPrint("SetCurrentNode: Starting Node: " + startNodeIndex)
-        currentNodeIndex = startNodeIndex;//Sets current node to 0; start of dialog
-    }else{
-        local tempIndex = currentDialog[currentNodeIndex].next[index]//Sets tempIndex to content of index of nextNodes[]
-        local newIndex = currentDialog[tempIndex].next[0]
-        DebugPrint("SetCurrentNode: Old Node: " + currentNodeIndex + " -> new Node: " + newIndex)
-        currentNodeIndex = newIndex;
+//Search the dialog tree for requested node id
+function FindNode(id) {
+    foreach (node in currentDialog) {
+        if (node.id == id) {
+            return node
+        }
+    }
+}
+
+//Get next node in dialog tree by id if present
+function SetCurrentNode(optionsIndex) {
+    if (currentNodeID == null){//No id has been set -> dialog wasn't active yet
+        DebugPrint("SetCurrentNode: Starting Node: " + startNodeID)
+        currentNodeID = startNodeID;//Sets current node to 0; start of dialog
+        currentNode = FindNode(currentNodeID)
+    }else{//New node present
+        local newNodeID = FindNode(currentNode.next[optionsIndex]).next[0]
+        DebugPrint("SetCurrentNode: Old Node: " + currentNodeID + " -> new Node: " + newNodeID)
+        currentNode = FindNode(newNodeID)
+        currentNodeID = currentNode.id
     }
 }
 
@@ -123,24 +138,25 @@ function ArrayFilter(array, argument){
 }
 
 //Catch current dialog options and place them in an array for later use
-function SetOptions(nodeIndex)
+function SetOptions()
 {
     optionsMapping.clear()
     optionsMapping.resize(0)
-    local optionsLength = currentDialog[nodeIndex].next.len()
+    local optionsLength = currentNode.next.len()
     printl(optionsLength)
     options.clear()
     options.resize(0)//resize to prevent memory leak
     for (local i = 0; i < optionsLength; i++)
     {
+        local nextNode = FindNode(currentNode.next[i])
         printl(i)
-        if(!("nodeAccess" in currentDialog[currentDialog[nodeIndex].next[i]]) || ("nodeAccess" in currentDialog[currentDialog[nodeIndex].next[i]] && currentDialog[currentDialog[nodeIndex].next[i]].nodeAccess == 1)){
-            printl("Access")
-            options.insert(i, currentDialog[currentDialog[nodeIndex].next[i]].topLine[0])
+        if(!("nodeAccess" in nextNode) || ("nodeAccess" in nextNode) && nextNode.nodeAccess == 1){
+            DebugPrint("Access")
+            options.insert(i, nextNode.topLine[0])
             optionsMapping.append(i)
         }else{
             options.insert(i, "/no Access to node/")
-            printl("no Access")
+            DebugPrint("no Access")
             }
     }
     options = ArrayFilter(options, "/no Access to node/")
@@ -171,21 +187,22 @@ function ArrayCopy(array){
     }
 }
 
-function SetTopLine(nodeIndex)
+function SetTopLine()
 {
-    topLine = ArrayCopy(currentDialog[nodeIndex].topLine)
+    printl(currentNode.topLine)
+    topLine = ArrayCopy(currentNode.topLine)
     DebugPrint("SetTopLine: " + ArrayPrint(topLine))
 }
 
-function SetSndPath(nodeIndex)
+function SetSndPath()
 {
-    sndPath = ArrayCopy(currentDialog[nodeIndex].sndPath)
+    sndPath = ArrayCopy(currentNode.sndPath)
     DebugPrint("SetSndPath: " + ArrayPrint(sndPath))
 }
 
-function SetSndDur(nodeIndex)
+function SetSndDur()
 {
-    sndDur = ArrayCopy(currentDialog[nodeIndex].sndDur)
+    sndDur = ArrayCopy(currentNode.sndDur)
     DebugPrint("SetSndDur: " + ArrayPrint(sndDur))
 }
 
@@ -198,17 +215,17 @@ function FetchOptionsCount() {
 function FetchDialogInfo(){
     DebugPrint("FetchDialogInfo")
     SetCurrentNode(optionsMapping[selection])
-    SetTopLine(currentNodeIndex)
-    SetOptions(currentNodeIndex)
-    SetSndPath(currentNodeIndex)
-    SetSndDur(currentNodeIndex)
+    SetTopLine()
+    SetOptions()
+    SetSndPath()
+    SetSndDur()
     CreateDialogString()
 }
 
 //Calls a function tied to the current node
 function ExecuteNodeFuntion(){
-    if("nodeFunction" in currentDialog[currentNodeIndex]){
-        currentDialog[currentNodeIndex].nodeFunction()
+    if("nodeFunction" in currentDialog[currentNodeID]){
+        currentDialog[currentNodeID].nodeFunction()
     }else{
         printl("No node function")
     }
@@ -260,7 +277,7 @@ function PlayNode() {
 
     for (local i = 0; i<topLine.len(); i++)
     {
-        EntFire("HudHint", "AddOutput", "message " + topLine[i], 0)
+        hudhint.__KeyValueFromString("message", topLine[i])
         ShowDialog()
 
                 //If sound file present play
@@ -272,8 +289,7 @@ function PlayNode() {
                 }
         yield SuspendGenerator(sndDur[i])
     }
-
-    EntFire("HudHint", "AddOutput", "message " + dialogString, 0)
+    hudhint.__KeyValueFromString("message", dialogString)
     EntFire("HudHint", "ShowHudHint", "", 0, activator)
 
     if(options.len() > 0){
@@ -296,7 +312,7 @@ function AddSelection() {
             selection = upperBound;
         }
         CreateDialogString();
-        EntFire("HudHint", "AddOutput", "message " + dialogString, 0);
+        hudhint.__KeyValueFromString("message", dialogString)
         ShowDialog()
     }
 }
@@ -311,7 +327,7 @@ function SubstractSelection() {
             selection = lowerBound;
         }
         CreateDialogString();
-        EntFire("HudHint", "AddOutput", "message " + dialogString, 0);
+        hudhint.__KeyValueFromString("message", dialogString)
         ShowDialog()
     }
 }
@@ -320,11 +336,16 @@ function SubstractSelection() {
 function AcceptOption() {
     if (playerControl == true){
         DebugPrint("AcceptOption")
+        if(FindNode(currentNode.next[optionsMapping[selection]]).next.len() != 0){
         SetPlayerControl(0)
         FetchDialogInfo()
         generator = PlayNode()
         resume generator
         selection = 0
+        }else{
+            DebugPrint("No Node/s availiable, ending dialog")
+            EndDialog()
+        }
     }
 }
 
@@ -347,8 +368,8 @@ function RefreshDialog(){
 
 //Updates the entranceNode of the dialog for later use
 function SaveProgress(){
-    if(currentDialog[currentNodeIndex].newEntranceNode != currentDialog[currentDialog.len() - 1]){
-        currentDialog[currentDialog.len() - 1] = currentDialog[currentNodeIndex].newEntranceNode
+    if(currentNode.newEntranceNode != currentDialog[currentDialog.len() - 1]){
+        currentDialog[currentDialog.len() - 1] = currentNode.newEntranceNode
     }
     DebugPrint("Progress saved: " + currentDialog[currentDialog.len() - 1])
 
@@ -358,19 +379,19 @@ function SetCurrentDialog(index){
     currentDialog = dialogs[index]
 }
 
-//Reset currentNodeIndex and get EntranceNode from dialog
+//Reset currentNodeID and get EntranceNode from dialog
 function LoadProgress(index){
     DebugPrint("LoadProgress:")
     SetCurrentDialog(index)
-    currentNodeIndex = null;
-    startNodeIndex = currentDialog[currentDialog.len() - 1]
-    DebugPrint("EntranceNode: " + startNodeIndex)
+    currentNodeID = null;
+    startNodeID = currentDialog[currentDialog.len() - 1]
+    DebugPrint("EntranceNode: " + startNodeID)
     FetchDialogInfo()
 }
 
 //Starts the dialog
 function StartDialog(dialogIndex){
-    DebugPrint("StartDialog: " + dialogs[dialogIndex] + " out of " + dialogs)
+    DebugPrint("StartDialog: " + dialogs[dialogIndex] + " out of " + ArrayPrint(dialogs))
     EntFire("Button", "Lock", "", 0)
     GetPlayer()
     LoadProgress(dialogIndex)
@@ -381,7 +402,7 @@ function StartDialog(dialogIndex){
     resume generator//Starts the generator which is initially suspended
 }
 
-//Ends dialog
+//Ends dialog, save progress and reset
 function EndDialog(){
     DebugPrint("EndDialog")
     SaveProgress()
@@ -395,5 +416,4 @@ function EndDialog(){
 
 function test(){
     printl("nodeAccess: " + testDialog[3].nodeAccess)
-    printl(version)
 }
